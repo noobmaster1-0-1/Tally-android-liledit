@@ -12,9 +12,9 @@
     <string name="qa_tr">Transfer</string>
     <string name="w_income">Add income</string>
     <string name="w_transfer">Transfer</string>
-    <string name="expense_call_title">Record today&apos;s expenses</string>
+    <string name="expense_call_title">Record today\\'s expenses</string>
     <string name="expense_call_text">Have you added everything you spent today?</string>
-    <string name="expense_call_hint">Answer if you&apos;re done. Decline to be reminded again.</string>
+    <string name="expense_call_hint">Answer if you\\'re done. Decline to be reminded again.</string>
     <string name="expense_call_answer">Already added</string>
     <string name="expense_call_decline">Not yet</string>
     <string name="page_stopped">Tally\'s screen keeps stopping. Everything you saved is kept.</string>
@@ -27,8 +27,6 @@
     <string name="ch_check">Balance check</string>
     <string name="ch_dues">Loan &amp; lending due days</string>
     <string name="ch_backup">Backup problems</string>
-    <string name="n_nudge_title">Nothing written in Tally today</string>
-    <string name="n_nudge_text">Take a minute to note what you spent.</string>
     <string name="n_check_title">Do your balances still match?</string>
     <!-- %1$s: the person, %2$s: the amount due -->
     <string name="n_owes_you">%1$s owes you %2$s</string>
