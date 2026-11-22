@@ -12,3 +12,6 @@
 - Adds direct expense, income, and transfer shortcuts.
 - Each shortcut opens the matching entry form directly, without the Quick Add chooser.
 - The original balance/spending content and launcher icon remain.
+
+
+Build requested after repository Actions were enabled; this commit triggers the existing Build APK workflow.
