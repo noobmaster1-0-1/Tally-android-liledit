@@ -62,19 +62,28 @@
         </LinearLayout>
     </LinearLayout>
 
-    <FrameLayout
-        android:id="@+id/w_add"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:background="@drawable/widget_btn"
-        android:contentDescription="@string/w_add">
-
-        <ImageView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_gravity="center"
-            android:importantForAccessibility="no"
-            android:src="@drawable/ic_w_add" />
-    </FrameLayout>
+        android:gravity="center"
+        android:orientation="horizontal">
+        <FrameLayout android:id="@+id/w_add" android:layout_width="52dp" android:layout_height="52dp"
+            android:background="@drawable/widget_btn" android:contentDescription="@string/w_add">
+            <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"
+                android:importantForAccessibility="no" android:src="@drawable/ic_w_remove" />
+        </FrameLayout>
+        <FrameLayout android:id="@+id/w_income" android:layout_width="52dp" android:layout_height="52dp"
+            android:layout_marginStart="6dp" android:background="@drawable/widget_btn"
+            android:contentDescription="@string/w_income">
+            <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"
+                android:importantForAccessibility="no" android:src="@drawable/ic_w_add" />
+        </FrameLayout>
+        <FrameLayout android:id="@+id/w_transfer" android:layout_width="52dp" android:layout_height="52dp"
+            android:layout_marginStart="6dp" android:background="@drawable/widget_btn"
+            android:contentDescription="@string/w_transfer">
+            <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"
+                android:importantForAccessibility="no" android:src="@drawable/ic_w_swap" />
+        </FrameLayout>
+    </LinearLayout>
 </LinearLayout>

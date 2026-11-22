@@ -108,7 +108,8 @@ function syncReminders() {
   try {
     Android.setReminders(
       JSON.stringify({
-        daily: Object.assign({ on: r.daily && activeAccounts().length > 0 }, hmObj(r.time)), // nothing to write in yet
+        daily: Object.assign({ on: r.daily && activeAccounts().length > 0,
+          end: r.endTime || "22:00", interval: r.interval || 30 }, hmObj(r.time)), // repeated call-style expense reminder
         check: Object.assign({ on: r.check && activeAccounts().length > 0 }, hmObj(r.checkTime), {
           text: checkText(),
           checked: S.settings.lastCheck || "",
@@ -148,11 +149,21 @@ function toggleReminder(k) {
   if (r[k]) askNotify();
 }
 /* a time button in Settings: the wheel picker for that reminder (or the daily backup), then save and re-arm */
+/* Cycle the expense-call repeat interval: 15 → 30 → 60 minutes. */
+function cycleExpenseInterval() {
+  const r = S.settings.remind;
+  r.interval = ({ 15: 30, 30: 60, 60: 15 })[r.interval] || 30;
+  save();
+  syncReminders();
+  render();
+}
+/* a time button in Settings: the wheel picker for that reminder (or the daily backup), then save and re-arm */
 function pickTime(k) {
   const r = S.settings.remind,
     b = S.settings.backup,
     c = {
       nudge: [T("remind.nudgeAt"), r.time, v => (r.time = v)],
+      nudgeEnd: [T("remind.nudgeUntil"), r.endTime || "22:00", v => (r.endTime = v)],
       check: [T("remind.checkAt"), r.checkTime, v => (r.checkTime = v)],
       due: [T("remind.duesAt"), r.dueTime, v => (r.dueTime = v)],
       backup: [T("backup.at"), b.time, v => (b.time = v)],
@@ -174,10 +185,13 @@ function askNotify() {
   } catch (e) {}
 }
 /* the permissions reminders need, shared by Settings' card and the first-open dialog: [kind] (texts perms.<kind>) */
-const PERM_ROWS = [["notif"], ["battery"], ["exact"]];
+const PERM_ROWS = [["notif"], ["battery"], ["exact"], ["fullscreen"]];
 /* the rows to offer: Android counts unrestricted battery as allowing alarms & reminders, so that row only shows on a
    phone where it's still off although battery is already allowed */
-const permRows = h => PERM_ROWS.filter(([k]) => k !== "exact" || (h.battery !== false && h.exact === false));
+const permRows = h => PERM_ROWS.filter(([k]) =>
+  (k !== "exact" || (h.battery !== false && h.exact === false)) &&
+  (k !== "fullscreen" || h.fullscreen === false)
+);
 /* one permission: Allow (the shell opens Android's prompt, popup or switch screen), or a quiet "Allowed" */
 function permRow([k], ok) {
   return (

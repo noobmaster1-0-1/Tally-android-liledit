@@ -907,7 +907,9 @@ public class MainActivity extends Activity {
                     || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED);
             boolean exact = Build.VERSION.SDK_INT < 31 || am == null || am.canScheduleExactAlarms();
             boolean battery = pm == null || pm.isIgnoringBatteryOptimizations(getPackageName());
-            return "{\"notif\":" + notif + ",\"exact\":" + exact + ",\"battery\":" + battery + "}";
+            boolean fullscreen = Build.VERSION.SDK_INT < 34 || (nm != null && nm.canUseFullScreenIntent());
+            return "{\"notif\":" + notif + ",\"exact\":" + exact + ",\"battery\":" + battery
+                    + ",\"fullscreen\":" + fullscreen + "}";
         }
 
         /**
@@ -932,6 +934,8 @@ public class MainActivity extends Activity {
                     i = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, pkg);
                 } else if ("battery".equals(kind)) {
                     i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkg);
+                } else if ("fullscreen".equals(kind) && Build.VERSION.SDK_INT >= 34) {
+                    i = new Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, pkg);
                 } else if ("lang".equals(kind) && Build.VERSION.SDK_INT >= 33) {
                     i = new Intent(Settings.ACTION_APP_LOCALE_SETTINGS, pkg);
                 } else {

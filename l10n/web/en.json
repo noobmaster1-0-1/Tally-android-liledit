@@ -863,15 +863,19 @@
     "mark": "Archived"
   },
   "remind": {
-    "nudge": "Evening nudge",
-    "nudgeHint": "If nothing was written that day",
+    "nudge": "Expense reminder calls",
+    "nudgeHint": "Repeat until you confirm today’s expenses are recorded",
     "check": "Balance check",
     "checkHint": "Do your balances still match?",
     "dues": "Loan & lending due days",
     "duesHint": "On the due day, or monthly when there is none",
-    "nudgeAt": "Evening nudge at",
+    "nudgeAt": "Expense reminders start at",
     "checkAt": "Balance check at",
-    "duesAt": "Due-day reminders at"
+    "duesAt": "Due-day reminders at",
+    "nudgeUntil": "Repeat until",
+    "nudgeUntilHint": "Stop prompting after this time",
+    "repeatEvery": "Repeat interval",
+    "repeatHint": "Tap to cycle between 15, 30 and 60 minutes"
   },
   "restore": {
     "btn": "Restore from backup",
@@ -903,7 +907,9 @@
     "exactWhy": "So reminders come on time",
     "allowed": "Allowed",
     "allow": "Allow",
-    "intro": "For reminders and the daily backup."
+    "intro": "For reminders and the daily backup.",
+    "fullscreen": "Full-screen reminders",
+    "fullscreenWhy": "Allow Tally to show the incoming-call screen over your lock screen."
   },
   "wipe": {
     "first": {

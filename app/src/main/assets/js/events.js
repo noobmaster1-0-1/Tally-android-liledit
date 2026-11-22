@@ -141,6 +141,9 @@ document.addEventListener("click", ev => {
     case "rem-check":
       toggleReminder("check");
       break;
+    case "rem-interval":
+      cycleExpenseInterval();
+      break;
     case "rem-fix":
       fixReminders(v);
       break;

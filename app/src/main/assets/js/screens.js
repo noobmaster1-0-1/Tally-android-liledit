@@ -1367,8 +1367,10 @@ function settingsView() {
       ["12", T("settings.h12")],
     ]) +
     langRow();
-  const r = S.settings.remind,
-    remRow = (k, act, title, sub, on, time) =>
+  const r = S.settings.remind;
+  r.endTime = r.endTime || "22:00";
+  r.interval = r.interval || 30;
+  const remRow = (k, act, title, sub, on, time) =>
       '<div class="setrow"><span class="mid"><div>' +
       esc(title) +
       '</div><div class="s">' +
@@ -1393,6 +1395,8 @@ function settingsView() {
     healthCard() +
     '<div class="list">' +
     remRow("nudge", "rem-daily", T("remind.nudge"), T("remind.nudgeHint"), r.daily, r.time) +
+    '<div class="setrow"><span class="mid"><div>' + T("remind.nudgeUntil") + '</div><div class="s">' + T("remind.nudgeUntilHint") + '</div></span><button class="fieldbtn tbtn" data-act="pick-time" data-v="nudgeEnd"' + (r.daily ? "" : " disabled") + '><span>' + esc(timeLabel(r.endTime)) + '</span>' + ic("schedule") + '</button></div>' +
+    '<div class="setrow"><span class="mid"><div>' + T("remind.repeatEvery") + '</div><div class="s">' + T("remind.repeatHint") + '</div></span><button class="fieldbtn tbtn" data-act="rem-interval"' + (r.daily ? "" : " disabled") + '><span>' + r.interval + ' min</span>' + ic("refresh-cw") + '</button></div>' +
     remRow("check", "rem-check", T("remind.check"), T("remind.checkHint"), r.check, r.checkTime) +
     remRow("due", "rem-dues", T("remind.dues"), T("remind.duesHint"), r.dues, r.dueTime) +
     "</div>";

@@ -5,17 +5,25 @@
     <string name="w_label">Tally · Today</string>
     <string name="w_spent">Spent today</string>
     <string name="w_open">Open Tally</string>
-    <string name="w_add">Quick add</string>
+    <string name="w_add">Add expense</string>
     <string name="qa_title">Quick add</string>
     <string name="qa_out">Spent</string>
     <string name="qa_in">Received</string>
     <string name="qa_tr">Transfer</string>
+    <string name="w_income">Add income</string>
+    <string name="w_transfer">Transfer</string>
+    <string name="expense_call_title">Record today&apos;s expenses</string>
+    <string name="expense_call_text">Have you added everything you spent today?</string>
+    <string name="expense_call_hint">Answer if you&apos;re done. Decline to be reminded again.</string>
+    <string name="expense_call_answer">Already added</string>
+    <string name="expense_call_decline">Not yet</string>
     <string name="page_stopped">Tally\'s screen keeps stopping. Everything you saved is kept.</string>
     <string name="try_again">Try again</string>
     <string name="no_webview">Tally needs Android System WebView, which is missing or being updated right now. Please try again in a moment.</string>
 
     <!-- notifications (ReminderReceiver) -->
     <string name="ch_nudge">Evening nudge</string>
+    <string name="ch_expense_call">Expense reminder calls</string>
     <string name="ch_check">Balance check</string>
     <string name="ch_dues">Loan &amp; lending due days</string>
     <string name="ch_backup">Backup problems</string>

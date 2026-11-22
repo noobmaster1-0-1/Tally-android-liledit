@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 /**
- * Home-screen widget: today's total balance, today's spending and a + that opens {@link QuickAddActivity}.
+ * Home-screen widget: today's total balance and spending, plus direct expense, income and transfer shortcuts.
  * The page is the source of truth: it sends ready-formatted numbers with Android.setWidget(json)
  *   {date:"yyyy-MM-dd", balance:"$1,250.00", spent:"$12.50", zero:"$0.00"}
  * and "spent" only counts for that date, so after midnight the widget shows zero until the app is opened.
@@ -133,18 +133,20 @@ public class TallyWidget extends AppWidgetProvider {
         v.setTextViewText(R.id.w_title, ctx.getString(R.string.w_label));
         v.setTextViewText(R.id.w_spent_label, ctx.getString(R.string.w_spent));
         v.setContentDescription(R.id.w_add, ctx.getString(R.string.w_add));
+        v.setContentDescription(R.id.w_income, ctx.getString(R.string.w_income));
+        v.setContentDescription(R.id.w_transfer, ctx.getString(R.string.w_transfer));
 
-        // through OpenActivity (like the + goes through QuickAddActivity): the home screen starts widget taps with a
-        // plain-colour splash, so the app itself is started one step later, from our own activity, and gets its logo
-        Intent open = new Intent(ctx, OpenActivity.class);
-        open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-        v.setOnClickPendingIntent(R.id.w_body, PendingIntent.getActivity(ctx, 40, open,
+        // Every widget action opens the real app directly on the corresponding form.
+        Intent home = new Intent(ctx, OpenActivity.class);
+        home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        v.setOnClickPendingIntent(R.id.w_body, PendingIntent.getActivity(ctx, 40, home,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-
-        Intent add = new Intent(ctx, QuickAddActivity.class);
-        add.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-        v.setOnClickPendingIntent(R.id.w_add, PendingIntent.getActivity(ctx, 41, add,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        v.setOnClickPendingIntent(R.id.w_add, PendingIntent.getActivity(ctx, 41,
+                MainActivity.openIntent(ctx, "add:out"), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        v.setOnClickPendingIntent(R.id.w_income, PendingIntent.getActivity(ctx, 43,
+                MainActivity.openIntent(ctx, "add:in"), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        v.setOnClickPendingIntent(R.id.w_transfer, PendingIntent.getActivity(ctx, 44,
+                MainActivity.openIntent(ctx, "add:tr"), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         return v;
     }
 

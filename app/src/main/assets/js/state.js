@@ -29,7 +29,7 @@ function blank() {
       haptics: true,
       hapticLevel: 3,
       donut: "both",
-      remind: { daily: true, time: "21:00", dues: true, dueTime: "09:00", check: true, checkTime: "08:00" },
+      remind: { daily: true, time: "19:00", endTime: "22:00", interval: 30, dues: true, dueTime: "09:00", check: true, checkTime: "08:00" },
       backup: { on: false, time: "23:00" },
       hiddenPeople: [], // folded names taken out of the people suggestions (Lend, Borrow)
       hiddenPayees: [], // … and out of the payee suggestions (Spent, Money in)
@@ -135,6 +135,8 @@ function migrate(o) {
   s.settings.remind = {
     daily: r.daily !== false,
     time: hm(r.time, "21:00"),
+    endTime: hm(r.endTime, "22:00"),
+    interval: [15, 30, 60].includes(r.interval) ? r.interval : 30,
     dues: r.dues !== false,
     dueTime: hm(r.dueTime, "09:00"),
     check: r.check !== false,

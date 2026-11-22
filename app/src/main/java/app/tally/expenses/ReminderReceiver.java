@@ -46,9 +46,13 @@ public class ReminderReceiver extends BroadcastReceiver {
     static final String A_CHECK = "app.tally.expenses.CHECK";
     static final String A_DUE = "app.tally.expenses.DUE";
     static final String A_EXTEND = "app.tally.expenses.EXTEND";
+    static final String A_EXPENSE_ACTION = "app.tally.expenses.EXPENSE_ACTION";
+    static final String EXPENSE_ANSWER = "answer";
+    static final String EXPENSE_DECLINE = "decline";
+    private static final int EXPENSE_ID = 3;
     private static final String PREFS = "tally_reminders";
     /** Channels: loan due days keep the original id (and whatever the user set for it). */
-    static final String CH_DUES = "reminders", CH_NUDGE = "nudge", CH_CHECK = "check", CH_BACKUP = "backup";
+    static final String CH_DUES = "reminders", CH_NUDGE = "nudge", CH_CHECK = "check", CH_BACKUP = "backup", CH_EXPENSE_CALL = "expense_call";
     private static final int DAILY_ID = 1, CHECK_ID = 2;
     /** The config (plus exact-alarm ability) this process last armed: an unchanged sync re-arms nothing. In memory
      *  only, so the first sync after a force-stop or reboot (when Android has dropped the alarms) always re-arms. */
@@ -59,13 +63,13 @@ public class ReminderReceiver extends BroadcastReceiver {
         String a = in.getAction();
         SharedPreferences p = prefs(ctx);
         String t = today();
-        if (A_DAILY.equals(a)) {
+        if (A_EXPENSE_ACTION.equals(a)) {
+            handleExpenseResponse(ctx, in.getStringExtra("response"));
+        } else if (A_DAILY.equals(a)) {
             JSONObject dl = config(ctx).optJSONObject("daily");
-            if (dl != null && dl.optBoolean("on") && reached(dl, 21) && !t.equals(p.getString("lastEntry", ""))
-                    && !t.equals(p.getString("shown:nudge", ""))) {
-                show(ctx, CH_NUDGE, DAILY_ID, ctx.getString(R.string.n_nudge_title),
-                        ctx.getString(R.string.n_nudge_text), openApp(ctx, null, DAILY_ID), null);
-                p.edit().putString("shown:nudge", t).apply();
+            if (expenseReminderApplies(ctx, dl, t)) {
+                showExpenseCall(ctx);
+                scheduleNextExpenseCall(ctx, dl);
             }
         } else if (A_CHECK.equals(a)) {
             JSONObject ck = config(ctx).optJSONObject("check");
@@ -106,7 +110,14 @@ public class ReminderReceiver extends BroadcastReceiver {
         SharedPreferences p = prefs(ctx);
         String key = cfg + canExact(ctx);
         if (key.equals(armedFor) && cfg.equals(p.getString("config", null))) return;
-        p.edit().putString("config", cfg).putString("lastEntry", config(cfg).optString("lastEntry", "")).apply();
+        JSONObject oldDaily = config(ctx).optJSONObject("daily");
+        JSONObject newDaily = config(cfg).optJSONObject("daily");
+        String oldDailyJson = oldDaily == null ? "" : oldDaily.toString();
+        String newDailyJson = newDaily == null ? "" : newDaily.toString();
+        SharedPreferences.Editor edit = p.edit().putString("config", cfg)
+                .putString("lastEntry", config(cfg).optString("lastEntry", ""));
+        if (!oldDailyJson.equals(newDailyJson)) edit.remove("expense:next").remove("expense:day");
+        edit.apply();
         schedule(ctx);
         armedFor = key;
         refreshShown(ctx, config(cfg));
@@ -170,8 +181,8 @@ public class ReminderReceiver extends BroadcastReceiver {
         // nothing until the page has said what's on (a widget can arm this before Tally was ever opened)
         String t = today();
         JSONObject ck = cfg.optJSONObject("check");
-        armDaily(ctx, am, cfg.optJSONObject("daily"), A_DAILY, DAILY_ID, 21, "nudge",
-                !t.equals(prefs(ctx).getString("lastEntry", "")));
+        scheduleExpenseCall(ctx, am, cfg.optJSONObject("daily"), t);
+        // The former one-shot evening nudge is superseded by the repeat-until-confirmed expense call.
         armDaily(ctx, am, ck, A_CHECK, CHECK_ID, 8, "check", ck != null && !t.equals(ck.optString("checked")));
 
         JSONObject at = cfg.optJSONObject("duesAt");
@@ -212,6 +223,70 @@ public class ReminderReceiver extends BroadcastReceiver {
             if (k.startsWith("shown:") && !keep.contains(k)) e.remove(k);
         }
         e.apply();
+    }
+
+
+    private static boolean expenseReminderApplies(Context ctx, JSONObject daily, String day) {
+        if (daily == null || !daily.optBoolean("on")) return false;
+        SharedPreferences p = prefs(ctx);
+        if (day.equals(p.getString("lastEntry", "")) || day.equals(p.getString("expense:answered", ""))) return false;
+        int startH=daily.optInt("h",19), startM=daily.optInt("m",0);
+        long now=System.currentTimeMillis();
+        return now>=dayAt(0,startH,startM).getTimeInMillis() && now<=expenseEnd(daily).getTimeInMillis();
+    }
+    private static int expenseInterval(JSONObject daily) { return Math.max(5,Math.min(240,daily==null?30:daily.optInt("interval",30))); }
+    private static Calendar expenseEnd(JSONObject daily) {
+        int[] hm=parseHm(daily==null?"22:00":daily.optString("end","22:00"),22,0);
+        int sh=daily==null?19:daily.optInt("h",19), sm=daily==null?0:daily.optInt("m",0);
+        if(hm[0]*60+hm[1]<=sh*60+sm) hm=new int[]{23,59};
+        return dayAt(0,hm[0],hm[1]);
+    }
+    private static int[] parseHm(String value,int dh,int dm) {
+        try { String[] p=value.split(":"); return new int[]{Math.max(0,Math.min(23,Integer.parseInt(p[0]))),Math.max(0,Math.min(59,Integer.parseInt(p[1])))}; }
+        catch(Exception e){return new int[]{dh,dm};}
+    }
+    private static void scheduleExpenseCall(Context ctx,AlarmManager am,JSONObject daily,String today) {
+        PendingIntent pi=broadcast(ctx,A_DAILY,null,DAILY_ID); SharedPreferences p=prefs(ctx);
+        if(daily==null||!daily.optBoolean("on")||today.equals(p.getString("lastEntry",""))||today.equals(p.getString("expense:answered",""))) {
+            am.cancel(pi); NotificationManager nm=(NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+            if(nm!=null)nm.cancel(EXPENSE_ID); p.edit().remove("expense:next").remove("expense:day").apply(); return;
+        }
+        int sh=daily.optInt("h",19),sm=daily.optInt("m",0);
+        long start=dayAt(0,sh,sm).getTimeInMillis(),end=expenseEnd(daily).getTimeInMillis(),now=System.currentTimeMillis();
+        String armedDay=p.getString("expense:day",""); long next=p.getLong("expense:next",0);
+        if(!today.equals(armedDay)){next=Math.max(start,now+1000);if(next>end)next=dayAt(1,sh,sm).getTimeInMillis();}
+        else if(next<=0||next<start||next>end)next=dayAt(1,sh,sm).getTimeInMillis();
+        if(next>now){arm(am,next,pi);p.edit().putLong("expense:next",next).putString("expense:day",today).apply();}
+        else {am.cancel(pi);p.edit().remove("expense:next").remove("expense:day").apply();}
+    }
+    private static void scheduleNextExpenseCall(Context ctx,JSONObject daily) {
+        if(daily==null||!daily.optBoolean("on"))return;
+        long next=System.currentTimeMillis()+expenseInterval(daily)*60_000L;
+        if(next<=expenseEnd(daily).getTimeInMillis()){
+            AlarmManager am=(AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
+            if(am!=null){arm(am,next,broadcast(ctx,A_DAILY,null,DAILY_ID));prefs(ctx).edit().putLong("expense:next",next).putString("expense:day",today()).apply();}
+        } else prefs(ctx).edit().putLong("expense:next",0).putString("expense:day",today()).apply();
+    }
+    private static void showExpenseCall(Context ctx) {
+        if(Build.VERSION.SDK_INT>=26){
+            NotificationManager nm=(NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE);if(nm==null)return;
+            NotificationChannel ch=new NotificationChannel(CH_EXPENSE_CALL,ctx.getString(R.string.ch_expense_call),NotificationManager.IMPORTANCE_HIGH);
+            ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);nm.createNotificationChannel(ch);
+            Intent activity=new Intent(ctx,ExpenseReminderActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            PendingIntent full=PendingIntent.getActivity(ctx,301,activity,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+            Notification n=new Notification.Builder(ctx,CH_EXPENSE_CALL).setSmallIcon(R.drawable.ic_notif)
+              .setContentTitle(ctx.getString(R.string.expense_call_title)).setContentText(ctx.getString(R.string.expense_call_text))
+              .setCategory(Notification.CATEGORY_CALL).setPriority(Notification.PRIORITY_MAX).setFullScreenIntent(full,true)
+              .setContentIntent(full).setOngoing(true).setAutoCancel(false).setVisibility(Notification.VISIBILITY_PUBLIC).build();
+            try{nm.notify(EXPENSE_ID,n);}catch(SecurityException ignored){}
+        } else {Intent i=new Intent(ctx,ExpenseReminderActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);ctx.startActivity(i);}
+    }
+    static void handleExpenseResponse(Context ctx,String response) {
+        SharedPreferences p=prefs(ctx);NotificationManager nm=(NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE);if(nm!=null)nm.cancel(EXPENSE_ID);
+        if(EXPENSE_ANSWER.equals(response)){
+            p.edit().putString("expense:answered",today()).remove("expense:next").remove("expense:day").apply();
+            AlarmManager am=(AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);if(am!=null)am.cancel(broadcast(ctx,A_DAILY,null,DAILY_ID));
+        } else if(EXPENSE_DECLINE.equals(response)) scheduleNextExpenseCall(ctx,config(ctx).optJSONObject("daily"));
     }
 
     /**
@@ -290,11 +365,8 @@ public class ReminderReceiver extends BroadcastReceiver {
             return; // some ROMs refuse this; the notices then just stay as they were
         }
         String t = today();
-        if (up.contains(DAILY_ID)) {
-            if (t.equals(cfg.optString("lastEntry"))) nm.cancel(DAILY_ID);
-            else show(ctx, CH_NUDGE, DAILY_ID, ctx.getString(R.string.n_nudge_title), ctx.getString(R.string.n_nudge_text),
-                    openApp(ctx, null, DAILY_ID), null, true); // the same, in the app's language now
-        }
+        // The old one-shot evening nudge was replaced by the full-screen repeat-until-confirmed call.
+        if (up.contains(DAILY_ID)) nm.cancel(DAILY_ID);
         if (up.contains(CHECK_ID)) {
             JSONObject ck = cfg.optJSONObject("check");
             if (ck == null || !ck.optBoolean("on") || t.equals(ck.optString("checked"))) nm.cancel(CHECK_ID);
@@ -332,6 +404,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         int imp = NotificationManager.IMPORTANCE_DEFAULT;
         nm.createNotificationChannels(Arrays.asList(
                 new NotificationChannel(CH_NUDGE, ctx.getString(R.string.ch_nudge), imp),
+                new NotificationChannel(CH_EXPENSE_CALL, ctx.getString(R.string.ch_expense_call), NotificationManager.IMPORTANCE_HIGH),
                 new NotificationChannel(CH_CHECK, ctx.getString(R.string.ch_check), imp),
                 new NotificationChannel(CH_DUES, ctx.getString(R.string.ch_dues), imp),
                 new NotificationChannel(CH_BACKUP, ctx.getString(R.string.ch_backup), imp)));
