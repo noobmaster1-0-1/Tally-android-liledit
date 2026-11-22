@@ -107,11 +107,17 @@ public class MainActivity extends Activity {
     static Intent openIntent(Context ctx, String open) {
         Intent i = new Intent(ctx, MainActivity.class)
                 .setAction(Intent.ACTION_MAIN)
-                .addCategory(Intent.CATEGORY_LAUNCHER)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        // only when there is something to open: a plain tap on the widget must not close a save dialog or a
-        // settings page left open on top of Tally
-        if (open != null) i.putExtra("open", open).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                .addCategory(Intent.CATEGORY_LAUNCHER);
+        if (open == null) {
+            // A plain widget-body tap resumes Tally exactly where it was.
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        } else {
+            // Quick-add actions must never fall back to the Home screen. Recreate the single-activity task so the
+            // requested action is handled by onCreate, then queued until the WebView has installed tallyOpen.
+            // This also avoids a stale/suspended WebView swallowing an onNewIntent callback on some launchers.
+            i.putExtra("open", open);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        }
         return i;
     }
 
