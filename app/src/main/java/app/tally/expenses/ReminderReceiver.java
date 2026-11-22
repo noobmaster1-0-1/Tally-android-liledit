@@ -275,7 +275,7 @@ public class ReminderReceiver extends BroadcastReceiver {
             Intent activity=new Intent(ctx,ExpenseReminderActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
             PendingIntent full=PendingIntent.getActivity(ctx,301,activity,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
             Notification n=new Notification.Builder(ctx,CH_EXPENSE_CALL).setSmallIcon(R.drawable.ic_notif)
-              .setContentTitle(ctx.getString(R.string.expense_call_title)).setContentText(ctx.getString(R.string.expense_call_text))
+              .setContentTitle(ctx.getString(R.string.n_nudge_title)).setContentText(ctx.getString(R.string.n_nudge_text))
               .setCategory(Notification.CATEGORY_CALL).setPriority(Notification.PRIORITY_MAX).setFullScreenIntent(full,true)
               .setContentIntent(full).setOngoing(true).setAutoCancel(false).setVisibility(Notification.VISIBILITY_PUBLIC).build();
             try{nm.notify(EXPENSE_ID,n);}catch(SecurityException ignored){}

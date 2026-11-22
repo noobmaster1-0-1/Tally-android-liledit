@@ -24,6 +24,8 @@
     <!-- notifications (ReminderReceiver) -->
     <string name="ch_nudge">Evening nudge</string>
     <string name="ch_expense_call">Expense reminder calls</string>
+    <string name="n_nudge_title">Nothing written in Tally today</string>
+    <string name="n_nudge_text">Take a minute to note what you spent.</string>
     <string name="ch_check">Balance check</string>
     <string name="ch_dues">Loan &amp; lending due days</string>
     <string name="ch_backup">Backup problems</string>

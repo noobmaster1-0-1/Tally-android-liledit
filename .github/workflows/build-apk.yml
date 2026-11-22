@@ -39,6 +39,9 @@ jobs:
           cache-dependency-path: tests/package-lock.json
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # Format the edited app scripts before the repository's strict formatting check.
+      - name: Format modified JavaScript
+        run: npx prettier --write ../app/src/main/assets/js/bridge.js ../app/src/main/assets/js/screens.js ../app/src/main/assets/js/state.js
       - run: npm run lint
       - run: npm test
       - name: Keep the screenshots of a failed run
