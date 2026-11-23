@@ -791,7 +791,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void testExpenseCall() {
             runOnUiThread(() -> {
-                NotificationManager nm = getSystemService(Context.NOTIFICATION_SERVICE);
+                NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                 if (Build.VERSION.SDK_INT >= 33
                         && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
                     notifFromButton = true;
@@ -803,18 +803,8 @@ public class MainActivity extends Activity {
                     openNotifSettings();
                     return;
                 }
-                // Android 14+ does not grant full-screen notification access to every app by default.
-                // Without this special access, the notification may appear only as a normal heads-up alert.
-                if (Build.VERSION.SDK_INT >= 34 && !nm.canUseFullScreenIntent()) {
-                    Uri pkg = Uri.parse("package:" + getPackageName());
-                    Intent settings = new Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, pkg);
-                    try {
-                        startActivity(settings);
-                    } catch (ActivityNotFoundException e) {
-                        startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg));
-                    }
-                    return;
-                }
+                // Even without full-screen access Android can still show and ring the CallStyle
+                // notification. The reminder settings page exposes the separate full-screen access switch.
                 ReminderReceiver.testExpenseCall(MainActivity.this);
             });
         }
