@@ -57,7 +57,7 @@ public class ReminderReceiver extends BroadcastReceiver {
     private static final int EXPENSE_ID = 3;
     private static final String PREFS = "tally_reminders";
     /** Channels: loan due days keep the original id (and whatever the user set for it). */
-    static final String CH_DUES = "reminders", CH_NUDGE = "nudge", CH_CHECK = "check", CH_BACKUP = "backup", CH_EXPENSE_CALL = "expense_call_salah_style_v2";
+    static final String CH_DUES = "reminders", CH_NUDGE = "nudge", CH_CHECK = "check", CH_BACKUP = "backup", CH_EXPENSE_CALL = "expense_call_salah_style_v3";
     private static final int DAILY_ID = 1, CHECK_ID = 2;
     /** The config (plus exact-alarm ability) this process last armed: an unchanged sync re-arms nothing. In memory
      *  only, so the first sync after a force-stop or reboot (when Android has dropped the alarms) always re-arms. */
@@ -479,7 +479,14 @@ public class ReminderReceiver extends BroadcastReceiver {
         int imp = NotificationManager.IMPORTANCE_DEFAULT;
         nm.createNotificationChannels(Arrays.asList(
                 new NotificationChannel(CH_NUDGE, ctx.getString(R.string.ch_nudge), imp),
-                new NotificationChannel(CH_EXPENSE_CALL, ctx.getString(R.string.ch_expense_call), NotificationManager.IMPORTANCE_HIGH),
+                new NotificationChannel(CH_EXPENSE_CALL, ctx.getString(R.string.ch_expense_call), NotificationManager.IMPORTANCE_HIGH) {{
+                    setDescription("Persistent call-style expense reminders");
+                    enableVibration(true);
+                    setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                            new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+                    setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+                }},
                 new NotificationChannel(CH_CHECK, ctx.getString(R.string.ch_check), imp),
                 new NotificationChannel(CH_DUES, ctx.getString(R.string.ch_dues), imp),
                 new NotificationChannel(CH_BACKUP, ctx.getString(R.string.ch_backup), imp)));
