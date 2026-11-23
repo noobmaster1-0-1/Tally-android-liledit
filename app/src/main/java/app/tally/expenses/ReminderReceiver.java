@@ -5,12 +5,15 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Person;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Icon;
 import android.os.Build;
+import android.media.AudioAttributes;
+import android.media.RingtoneManager;
 import android.service.notification.StatusBarNotification;
 
 import org.json.JSONArray;
@@ -54,7 +57,7 @@ public class ReminderReceiver extends BroadcastReceiver {
     private static final int EXPENSE_ID = 3;
     private static final String PREFS = "tally_reminders";
     /** Channels: loan due days keep the original id (and whatever the user set for it). */
-    static final String CH_DUES = "reminders", CH_NUDGE = "nudge", CH_CHECK = "check", CH_BACKUP = "backup", CH_EXPENSE_CALL = "expense_call";
+    static final String CH_DUES = "reminders", CH_NUDGE = "nudge", CH_CHECK = "check", CH_BACKUP = "backup", CH_EXPENSE_CALL = "expense_call_salah_style";
     private static final int DAILY_ID = 1, CHECK_ID = 2;
     /** The config (plus exact-alarm ability) this process last armed: an unchanged sync re-arms nothing. In memory
      *  only, so the first sync after a force-stop or reboot (when Android has dropped the alarms) always re-arms. */
@@ -296,26 +299,58 @@ public class ReminderReceiver extends BroadcastReceiver {
         if (nm != null) nm.cancel(TEST_EXPENSE_ID);
     }
 
+    /** Direct broadcast actions, matching the Salah Tracker call reminder pattern. */
+    private static PendingIntent expenseAction(Context ctx, String response, boolean test, int requestCode) {
+        Intent action = new Intent(ctx, ReminderReceiver.class).setAction(A_EXPENSE_ACTION)
+                .putExtra("response", response).putExtra(EXTRA_TEST, test);
+        return PendingIntent.getBroadcast(ctx, requestCode, action,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
     private static void showExpenseCall(Context ctx, boolean test) {
-        if(Build.VERSION.SDK_INT>=26){
-            NotificationManager nm=(NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE);if(nm==null)return;
-            NotificationChannel ch=new NotificationChannel(CH_EXPENSE_CALL,ctx.getString(R.string.ch_expense_call),NotificationManager.IMPORTANCE_HIGH);
-            ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);nm.createNotificationChannel(ch);
-            Intent activity = new Intent(ctx, ExpenseReminderActivity.class)
-                    .putExtra(EXTRA_TEST, test)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            PendingIntent full = PendingIntent.getActivity(ctx, test ? 302 : 301, activity,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-            Notification n=new Notification.Builder(ctx,CH_EXPENSE_CALL).setSmallIcon(R.drawable.ic_notif)
-              .setContentTitle(ctx.getString(R.string.n_nudge_title)).setContentText(ctx.getString(R.string.n_nudge_text))
-              .setCategory(Notification.CATEGORY_CALL).setPriority(Notification.PRIORITY_MAX).setFullScreenIntent(full,true)
-              .setContentIntent(full).setOngoing(true).setAutoCancel(false).setVisibility(Notification.VISIBILITY_PUBLIC).build();
-            try { nm.notify(test ? TEST_EXPENSE_ID : EXPENSE_ID, n); } catch (SecurityException ignored) { }
-        } else {
-            Intent i = new Intent(ctx, ExpenseReminderActivity.class).putExtra(EXTRA_TEST, test)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            ctx.startActivity(i);
+        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) return;
+
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel channel = new NotificationChannel(CH_EXPENSE_CALL,
+                    ctx.getString(R.string.ch_expense_call), NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Persistent call-style expense reminders");
+            channel.enableVibration(true);
+            channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                    new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            nm.createNotificationChannel(channel);
         }
+
+        PendingIntent answer = expenseAction(ctx, EXPENSE_ANSWER, test, test ? 306 : 304);
+        PendingIntent decline = expenseAction(ctx, EXPENSE_DECLINE, test, test ? 305 : 303);
+        PendingIntent openApp = PendingIntent.getActivity(ctx, test ? 302 : 301,
+                MainActivity.openIntent(ctx, null),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        Notification.Builder builder = Build.VERSION.SDK_INT >= 26
+                ? new Notification.Builder(ctx, CH_EXPENSE_CALL) : new Notification.Builder(ctx);
+        builder.setSmallIcon(R.drawable.ic_notif)
+                .setContentTitle(ctx.getString(R.string.n_nudge_title))
+                .setContentText(ctx.getString(R.string.n_nudge_text))
+                .setCategory(Notification.CATEGORY_CALL)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setContentIntent(openApp);
+        if (Build.VERSION.SDK_INT >= 31) {
+            Person caller = new Person.Builder().setName("Tally").setImportant(true).build();
+            builder.setStyle(Notification.CallStyle.forIncomingCall(caller, decline, answer).setIsVideo(false));
+        } else {
+            builder.setPriority(Notification.PRIORITY_MAX)
+                    .addAction(new Notification.Action.Builder(null, ctx.getString(R.string.expense_call_decline), decline).build())
+                    .addAction(new Notification.Action.Builder(null, ctx.getString(R.string.expense_call_answer), answer).build());
+        }
+        try {
+            // Android itself renders CallStyle; do not attach a custom full-screen Activity here.
+            nm.notify(test ? TEST_EXPENSE_ID : EXPENSE_ID, builder.build());
+        } catch (SecurityException ignored) { }
     }
     static void handleExpenseResponse(Context ctx,String response) {
         SharedPreferences p=prefs(ctx);NotificationManager nm=(NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE);if(nm!=null)nm.cancel(EXPENSE_ID);
