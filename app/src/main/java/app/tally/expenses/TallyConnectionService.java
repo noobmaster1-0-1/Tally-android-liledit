@@ -25,8 +25,10 @@ public class TallyConnectionService extends ConnectionService {
             activeTest = test;
             TelecomManager telecom = context.getSystemService(TelecomManager.class);
             if (telecom == null) return false;
-            PhoneAccountHandle handle = new PhoneAccountHandle(
-                    new ComponentName(context, TallyConnectionService.class), "tally_expense_reminder");
+            ComponentName service = new ComponentName(context, TallyConnectionService.class);
+            // Replace the earlier account registration so stale "Salah Reminder" metadata cannot be reused.
+            telecom.unregisterPhoneAccount(new PhoneAccountHandle(service, "tally_expense_reminder"));
+            PhoneAccountHandle handle = new PhoneAccountHandle(service, "tally_call_v2");
             PhoneAccount account = PhoneAccount.builder(handle, "Tally")
                     .setShortDescription("Tally")
                     .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
