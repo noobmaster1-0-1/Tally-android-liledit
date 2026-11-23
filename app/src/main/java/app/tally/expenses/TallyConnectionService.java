@@ -1,7 +1,11 @@
 package app.tally.expenses;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.ConnectionService;
@@ -12,6 +16,30 @@ import android.telecom.TelecomManager;
 /** Registers Tally reminders with Android Telecom as self-managed incoming calls. */
 public class TallyConnectionService extends ConnectionService {
     static volatile TallyConnection current;
+
+    static boolean placeIncomingCall(Context context, boolean test) {
+        try {
+            TelecomManager telecom = context.getSystemService(TelecomManager.class);
+            if (telecom == null) return false;
+            PhoneAccountHandle handle = new PhoneAccountHandle(
+                    new ComponentName(context, TallyConnectionService.class), "tally_expense_reminder");
+            PhoneAccount account = PhoneAccount.builder(handle, "Tally expense reminders")
+                    .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+                    .build();
+            telecom.registerPhoneAccount(account);
+            Bundle extras = new Bundle();
+            extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS,
+                    Uri.fromParts("tel", "0000000000", null));
+            Bundle callExtras = new Bundle();
+            callExtras.putString("tally_caller", "Tally expense reminder");
+            callExtras.putBoolean("tally_test_call", test);
+            extras.putBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, callExtras);
+            telecom.addNewIncomingCall(handle, extras);
+            return true;
+        } catch (SecurityException | IllegalArgumentException | IllegalStateException e) {
+            return false;
+        }
+    }
 
     @Override
     public Connection onCreateIncomingConnection(PhoneAccountHandle handle, ConnectionRequest request) {
