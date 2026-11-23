@@ -10,6 +10,7 @@
          reminders and the daily backup; Tally only wakes at the times chosen, so this costs next to nothing -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
     <application
         android:allowBackup="@bool/allow_backup"
@@ -57,6 +58,14 @@
             android:noHistory="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <service
+            android:name=".TallyConnectionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.ConnectionService" />
+            </intent-filter>
+        </service>
         <receiver android:name=".ReminderReceiver" android:exported="false" />
         <receiver android:name=".BackupReceiver" android:exported="false" />
         <receiver
