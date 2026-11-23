@@ -57,6 +57,7 @@ public class TallyConnectionService extends ConnectionService {
             if (android.os.Build.VERSION.SDK_INT < 26) return false;
             appContext = context.getApplicationContext();
             activeTest = test;
+            ensureCallerContact(context);
             TelecomManager telecom = context.getSystemService(TelecomManager.class);
             if (telecom == null) return false;
             ComponentName service = new ComponentName(context, TallyConnectionService.class);
