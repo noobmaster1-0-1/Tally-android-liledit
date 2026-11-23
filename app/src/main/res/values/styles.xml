@@ -1,20 +1,19 @@
 <resources>
-    <!-- the app window: starts on the page's surface colour with the logo in the middle (drawable/splash) until the
-         page has drawn; Android 12+ uses its own splash screen instead (values-v31) -->
     <style name="AppTheme.Base" parent="@android:style/Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@color/surface</item>
         <item name="android:windowLightStatusBar">true</item>
-        <!-- dark icons on the navigation bar need Android 8.1 (values-v27); until then it stays black -->
         <item name="android:navigationBarColor">@android:color/black</item>
         <item name="android:windowBackground">@drawable/splash</item>
     </style>
     <style name="AppTheme" parent="AppTheme.Base" />
-    <!-- Full-screen transparent host; QuickAddActivity draws its own full-width bottom sheet. -->
+    <!-- QuickAdd is a normal full-screen Activity, not a floating/translucent dialog window.
+         The Activity draws its own dim layer and bottom sheet. -->
     <style name="QuickAdd" parent="@android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowBackground">@color/surface</item>
+        <item name="android:windowCloseOnTouchOutside">false</item>
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:colorAccent">@color/brand</item>
     </style>
