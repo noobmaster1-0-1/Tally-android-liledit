@@ -5,10 +5,6 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.media.AudioAttributes;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.WindowManager;
@@ -18,7 +14,6 @@ import android.widget.TextView;
 /** Full-screen incoming-call-style expense reminder. */
 public class ExpenseReminderActivity extends Activity {
     private boolean test;
-    private Ringtone testRingtone;
     private int dp(float v) { return (int)(v * getResources().getDisplayMetrics().density + 0.5f); }
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -40,34 +35,8 @@ public class ExpenseReminderActivity extends Activity {
         actions.addView(action(getString(R.string.expense_call_decline),"×",Color.rgb(220,55,65),ReminderReceiver.EXPENSE_DECLINE),new LinearLayout.LayoutParams(0,-2,1));
         actions.addView(action(getString(R.string.expense_call_answer),"✓",Color.rgb(35,175,105),ReminderReceiver.EXPENSE_ANSWER),new LinearLayout.LayoutParams(0,-2,1));
         setContentView(root);
-        if (test) startTestRingtone();
     }
 
-    private void startTestRingtone() {
-        try {
-            Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-            if (uri == null) uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            testRingtone = RingtoneManager.getRingtone(this, uri);
-            if (testRingtone != null) {
-                testRingtone.setAudioAttributes(new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE).build());
-                if (Build.VERSION.SDK_INT >= 28) testRingtone.setLooping(true);
-                testRingtone.play();
-            }
-        } catch (RuntimeException ignored) { }
-    }
-
-    private void stopTestRingtone() {
-        if (testRingtone != null) {
-            try { testRingtone.stop(); } catch (RuntimeException ignored) { }
-            testRingtone = null;
-        }
-    }
-
-    @Override protected void onDestroy() {
-        stopTestRingtone();
-        super.onDestroy();
-    }
     private TextView text(String value,float size,int color,int style){TextView v=new TextView(this);v.setText(value);v.setTextSize(size);v.setTextColor(color);v.setTypeface(Typeface.DEFAULT,style);return v;}
     private LinearLayout action(String label,String symbol,int color,String response){
         LinearLayout wrap=new LinearLayout(this);wrap.setOrientation(1);wrap.setGravity(Gravity.CENTER);
