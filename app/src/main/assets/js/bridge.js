@@ -67,8 +67,8 @@ function syncReminders() {
   let maxTs = 0,
     maxDate = "";
   S.txns.forEach(t => {
-    // Only a spending entry should silence the expense reminder; income and transfers are not expenses.
-    if (t.type !== "expense") return;
+    // Tally stores spending entries with type "out"; income and transfers must not silence this reminder.
+    if (t.type !== "out") return;
     if (t.ts) maxTs = Math.max(maxTs, t.ts);
     else if (t.date > maxDate) maxDate = t.date;
   });
