@@ -3,10 +3,8 @@ package app.tally.expenses;
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
-import android.content.OperationApplicationException;
 import android.content.pm.PackageManager;
 import android.provider.ContactsContract;
-import android.os.RemoteException;
 import java.util.ArrayList;
 import android.content.Context;
 import android.net.Uri;
@@ -86,9 +84,8 @@ public class TallyConnectionService extends ConnectionService {
     @Override
     public Connection onCreateIncomingConnection(PhoneAccountHandle handle, ConnectionRequest request) {
         TallyConnection c = new TallyConnection();
-        Bundle extras = request.getExtras();
-        String caller = extras == null ? "Tally" : extras.getString("tally_caller", "Tally");
-        c.setCallerDisplayName(caller, TelecomManager.PRESENTATION_ALLOWED);
+        // Android forwards this exact display name to Bluetooth and wearable calling surfaces.
+        c.setCallerDisplayName("Tally", TelecomManager.PRESENTATION_ALLOWED);
         c.setAddress(request.getAddress() == null ? Uri.fromParts("tel", CALLER_NUMBER, null) : request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
         c.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
         c.setAudioModeIsVoip(true);
