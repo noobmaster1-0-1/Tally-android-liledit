@@ -787,6 +787,12 @@ public class MainActivity extends Activity {
             ReminderReceiver.save(MainActivity.this, json);
         }
 
+        /** Opens a test incoming-call screen without marking today's expenses as answered. */
+        @JavascriptInterface
+        public void testExpenseCall() {
+            runOnUiThread(() -> ReminderReceiver.testExpenseCall(MainActivity.this));
+        }
+
         /** Today's balance + spending for the home-screen widget, formatted by the page. */
         @JavascriptInterface
         public void setWidget(String json) {

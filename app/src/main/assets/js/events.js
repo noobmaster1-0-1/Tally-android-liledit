@@ -144,6 +144,9 @@ document.addEventListener("click", ev => {
     case "rem-interval":
       cycleExpenseInterval();
       break;
+    case "rem-test":
+      testExpenseCall();
+      break;
     case "rem-fix":
       fixReminders(v);
       break;

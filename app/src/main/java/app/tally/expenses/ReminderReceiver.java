@@ -47,6 +47,8 @@ public class ReminderReceiver extends BroadcastReceiver {
     static final String A_DUE = "app.tally.expenses.DUE";
     static final String A_EXTEND = "app.tally.expenses.EXTEND";
     static final String A_EXPENSE_ACTION = "app.tally.expenses.EXPENSE_ACTION";
+    static final String EXTRA_TEST = "expense_test";
+    private static final int TEST_EXPENSE_ID = 4;
     static final String EXPENSE_ANSWER = "answer";
     static final String EXPENSE_DECLINE = "decline";
     private static final int EXPENSE_ID = 3;
@@ -68,7 +70,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         } else if (A_DAILY.equals(a)) {
             JSONObject dl = config(ctx).optJSONObject("daily");
             if (expenseReminderApplies(ctx, dl, t)) {
-                showExpenseCall(ctx);
+                showExpenseCall(ctx, false);
                 scheduleNextExpenseCall(ctx, dl);
             }
         } else if (A_CHECK.equals(a)) {
@@ -259,27 +261,61 @@ public class ReminderReceiver extends BroadcastReceiver {
         if(next>now){arm(am,next,pi);p.edit().putLong("expense:next",next).putString("expense:day",today).apply();}
         else {am.cancel(pi);p.edit().remove("expense:next").remove("expense:day").apply();}
     }
-    private static void scheduleNextExpenseCall(Context ctx,JSONObject daily) {
-        if(daily==null||!daily.optBoolean("on"))return;
+    private static void scheduleNextExpenseCall(Context ctx, JSONObject daily) {
+        if (daily == null || !daily.optBoolean("on") || !expenseReminderApplies(ctx, daily, today())) {
+            AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+            if (am != null) am.cancel(broadcast(ctx, A_DAILY, null, DAILY_ID));
+            prefs(ctx).edit().remove("expense:next").remove("expense:day").apply();
+            return;
+        }
         long next=System.currentTimeMillis()+expenseInterval(daily)*60_000L;
         if(next<=expenseEnd(daily).getTimeInMillis()){
             AlarmManager am=(AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
             if(am!=null){arm(am,next,broadcast(ctx,A_DAILY,null,DAILY_ID));prefs(ctx).edit().putLong("expense:next",next).putString("expense:day",today()).apply();}
         } else prefs(ctx).edit().putLong("expense:next",0).putString("expense:day",today()).apply();
     }
-    private static void showExpenseCall(Context ctx) {
+    /** A Settings button test: show the same incoming-call notification without changing today's reminder state. */
+    static void testExpenseCall(Context ctx) {
+        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        boolean notifications = nm != null && nm.areNotificationsEnabled()
+                && (Build.VERSION.SDK_INT < 33 || ctx.checkSelfPermission("android.permission.POST_NOTIFICATIONS")
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED);
+        boolean fullScreen = Build.VERSION.SDK_INT < 34 || (nm != null && nm.canUseFullScreenIntent());
+        if (!notifications || !fullScreen) {
+            // This is a user-initiated test, so show the screen even when Android blocks full-screen notifications.
+            Intent i = new Intent(ctx, ExpenseReminderActivity.class).putExtra(EXTRA_TEST, true)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            ctx.startActivity(i);
+            return;
+        }
+        showExpenseCall(ctx, true);
+    }
+
+    static void finishTest(Context ctx) {
+        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) nm.cancel(TEST_EXPENSE_ID);
+    }
+
+    private static void showExpenseCall(Context ctx, boolean test) {
         if(Build.VERSION.SDK_INT>=26){
             NotificationManager nm=(NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE);if(nm==null)return;
             NotificationChannel ch=new NotificationChannel(CH_EXPENSE_CALL,ctx.getString(R.string.ch_expense_call),NotificationManager.IMPORTANCE_HIGH);
             ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);nm.createNotificationChannel(ch);
-            Intent activity=new Intent(ctx,ExpenseReminderActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            PendingIntent full=PendingIntent.getActivity(ctx,301,activity,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+            Intent activity = new Intent(ctx, ExpenseReminderActivity.class)
+                    .putExtra(EXTRA_TEST, test)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            PendingIntent full = PendingIntent.getActivity(ctx, test ? 302 : 301, activity,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             Notification n=new Notification.Builder(ctx,CH_EXPENSE_CALL).setSmallIcon(R.drawable.ic_notif)
               .setContentTitle(ctx.getString(R.string.n_nudge_title)).setContentText(ctx.getString(R.string.n_nudge_text))
               .setCategory(Notification.CATEGORY_CALL).setPriority(Notification.PRIORITY_MAX).setFullScreenIntent(full,true)
               .setContentIntent(full).setOngoing(true).setAutoCancel(false).setVisibility(Notification.VISIBILITY_PUBLIC).build();
-            try{nm.notify(EXPENSE_ID,n);}catch(SecurityException ignored){}
-        } else {Intent i=new Intent(ctx,ExpenseReminderActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);ctx.startActivity(i);}
+            try { nm.notify(test ? TEST_EXPENSE_ID : EXPENSE_ID, n); } catch (SecurityException ignored) { }
+        } else {
+            Intent i = new Intent(ctx, ExpenseReminderActivity.class).putExtra(EXTRA_TEST, test)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            ctx.startActivity(i);
+        }
     }
     static void handleExpenseResponse(Context ctx,String response) {
         SharedPreferences p=prefs(ctx);NotificationManager nm=(NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE);if(nm!=null)nm.cancel(EXPENSE_ID);

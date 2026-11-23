@@ -1397,6 +1397,7 @@ function settingsView() {
     remRow("nudge", "rem-daily", T("remind.nudge"), T("remind.nudgeHint"), r.daily, r.time) +
     '<div class="setrow"><span class="mid"><div>' + T("remind.nudgeUntil") + '</div><div class="s">' + T("remind.nudgeUntilHint") + '</div></span><button class="fieldbtn tbtn" data-act="pick-time" data-v="nudgeEnd"' + (r.daily ? "" : " disabled") + '><span>' + esc(timeLabel(r.endTime)) + '</span>' + ic("schedule") + '</button></div>' +
     '<div class="setrow"><span class="mid"><div>' + T("remind.repeatEvery") + '</div><div class="s">' + T("remind.repeatHint") + '</div></span><button class="fieldbtn tbtn" data-act="rem-interval"' + (r.daily ? "" : " disabled") + '><span>' + r.interval + ' min</span>' + ic("refresh-cw") + '</button></div>' +
+    '<div class="setrow"><span class="mid"><div>' + T("remind.testCall") + '</div><div class="s">' + T("remind.testCallHint") + '</div></span><button class="fieldbtn tbtn" data-act="rem-test"><span>' + T("remind.testCallButton") + '</span></button></div>' +
     remRow("check", "rem-check", T("remind.check"), T("remind.checkHint"), r.check, r.checkTime) +
     remRow("due", "rem-dues", T("remind.dues"), T("remind.duesHint"), r.dues, r.dueTime) +
     "</div>";

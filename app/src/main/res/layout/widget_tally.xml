@@ -68,13 +68,13 @@
         android:layout_marginStart="12dp"
         android:gravity="center"
         android:orientation="horizontal">
-        <FrameLayout android:id="@+id/w_add" android:layout_width="52dp" android:layout_height="52dp"
+        <FrameLayout android:id="@+id/w_add" android:layout_width="44dp" android:layout_height="44dp"
             android:background="@drawable/widget_btn" android:contentDescription="@string/w_add">
-            <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center"
                 android:importantForAccessibility="no" android:src="@drawable/ic_w_remove" />
         </FrameLayout>
         <FrameLayout android:id="@+id/w_income" android:layout_width="52dp" android:layout_height="52dp"
-            android:layout_marginStart="6dp" android:background="@drawable/widget_btn"
+            android:layout_marginStart="4dp" android:background="@drawable/widget_btn"
             android:contentDescription="@string/w_income">
             <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"
                 android:importantForAccessibility="no" android:src="@drawable/ic_w_add" />

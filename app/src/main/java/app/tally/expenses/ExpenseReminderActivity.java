@@ -13,9 +13,11 @@ import android.widget.TextView;
 
 /** Full-screen incoming-call-style expense reminder. */
 public class ExpenseReminderActivity extends Activity {
+    private boolean test;
     private int dp(float v) { return (int)(v * getResources().getDisplayMetrics().density + 0.5f); }
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        test = getIntent().getBooleanExtra(ReminderReceiver.EXTRA_TEST, false);
         if (Build.VERSION.SDK_INT >= 27) { setShowWhenLocked(true); setTurnScreenOn(true); }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         getWindow().setStatusBarColor(Color.rgb(20,25,35)); getWindow().setNavigationBarColor(Color.rgb(20,25,35));
@@ -39,11 +41,20 @@ public class ExpenseReminderActivity extends Activity {
         LinearLayout wrap=new LinearLayout(this);wrap.setOrientation(1);wrap.setGravity(Gravity.CENTER);
         TextView circle=text(symbol,36,Color.WHITE,Typeface.BOLD);circle.setGravity(Gravity.CENTER);
         GradientDrawable bg=new GradientDrawable();bg.setColor(color);bg.setShape(GradientDrawable.OVAL);circle.setBackground(bg);circle.setElevation(dp(6));
-        circle.setOnClickListener(v->{ReminderReceiver.handleExpenseResponse(this,response);finish();});
+        circle.setOnClickListener(v -> respond(response));
         wrap.addView(circle,new LinearLayout.LayoutParams(dp(76),dp(76)));
         TextView caption=text(label,14,Color.WHITE,Typeface.BOLD);caption.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.topMargin=dp(14);wrap.addView(caption,cp);
-        wrap.setOnClickListener(v->{ReminderReceiver.handleExpenseResponse(this,response);finish();});return wrap;
+        wrap.setOnClickListener(v -> respond(response));return wrap;
     }
-    @Override public void onBackPressed(){ReminderReceiver.handleExpenseResponse(this,ReminderReceiver.EXPENSE_DECLINE);super.onBackPressed();}
+    private void respond(String response) {
+        if (test) ReminderReceiver.finishTest(this);
+        else ReminderReceiver.handleExpenseResponse(this, response);
+        finish();
+    }
+    @Override public void onBackPressed() {
+        if (test) ReminderReceiver.finishTest(this);
+        else ReminderReceiver.handleExpenseResponse(this, ReminderReceiver.EXPENSE_DECLINE);
+        super.onBackPressed();
+    }
 }

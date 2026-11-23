@@ -67,6 +67,8 @@ function syncReminders() {
   let maxTs = 0,
     maxDate = "";
   S.txns.forEach(t => {
+    // Only a spending entry should silence the expense reminder; income and transfers are not expenses.
+    if (t.type !== "expense") return;
     if (t.ts) maxTs = Math.max(maxTs, t.ts);
     else if (t.date > maxDate) maxDate = t.date;
   });
@@ -156,6 +158,13 @@ function cycleExpenseInterval() {
   save();
   syncReminders();
   render();
+}
+
+/* Shows the incoming-call reminder on demand; this test never changes the real reminder schedule. */
+function testExpenseCall() {
+  try {
+    if (window.Android && Android.testExpenseCall) Android.testExpenseCall();
+  } catch (e) {}
 }
 /* a time button in Settings: the wheel picker for that reminder (or the daily backup), then save and re-arm */
 function pickTime(k) {
