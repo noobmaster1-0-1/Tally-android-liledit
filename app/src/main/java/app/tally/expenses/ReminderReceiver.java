@@ -12,8 +12,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Icon;
 import android.os.Build;
-import android.media.AudioAttributes;
-import android.media.RingtoneManager;
 import android.service.notification.StatusBarNotification;
 
 import org.json.JSONArray;
@@ -57,7 +55,7 @@ public class ReminderReceiver extends BroadcastReceiver {
     private static final int EXPENSE_ID = 3;
     private static final String PREFS = "tally_reminders";
     /** Channels: loan due days keep the original id (and whatever the user set for it). */
-    static final String CH_DUES = "reminders", CH_NUDGE = "nudge", CH_CHECK = "check", CH_BACKUP = "backup", CH_EXPENSE_CALL = "expense_call_salah_style_v3";
+    static final String CH_DUES = "reminders", CH_NUDGE = "nudge", CH_CHECK = "check", CH_BACKUP = "backup", CH_EXPENSE_CALL = "expense_call_silent_v4";
     private static final int DAILY_ID = 1, CHECK_ID = 2;
     /** The config (plus exact-alarm ability) this process last armed: an unchanged sync re-arms nothing. In memory
      *  only, so the first sync after a force-stop or reboot (when Android has dropped the alarms) always re-arms. */
@@ -470,10 +468,8 @@ public class ReminderReceiver extends BroadcastReceiver {
         NotificationChannel channel = new NotificationChannel(CH_EXPENSE_CALL,
                 ctx.getString(R.string.ch_expense_call), NotificationManager.IMPORTANCE_HIGH);
         channel.setDescription("Persistent call-style expense reminders");
-        channel.enableVibration(true);
-        channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
-                new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+        channel.enableVibration(false);
+        channel.setSound(null, null);
         channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
         return channel;
     }
