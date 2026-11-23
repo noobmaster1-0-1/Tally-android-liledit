@@ -790,7 +790,33 @@ public class MainActivity extends Activity {
         /** Opens a test incoming-call screen without marking today's expenses as answered. */
         @JavascriptInterface
         public void testExpenseCall() {
-            runOnUiThread(() -> ReminderReceiver.testExpenseCall(MainActivity.this));
+            runOnUiThread(() -> {
+                NotificationManager nm = getSystemService(Context.NOTIFICATION_SERVICE);
+                if (Build.VERSION.SDK_INT >= 33
+                        && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+                    notifFromButton = true;
+                    if (canPromptNotif() && askNotifPermission()) return;
+                    openNotifSettings();
+                    return;
+                }
+                if (nm == null || !nm.areNotificationsEnabled()) {
+                    openNotifSettings();
+                    return;
+                }
+                // Android 14+ does not grant full-screen notification access to every app by default.
+                // Without this special access, the notification may appear only as a normal heads-up alert.
+                if (Build.VERSION.SDK_INT >= 34 && !nm.canUseFullScreenIntent()) {
+                    Uri pkg = Uri.parse("package:" + getPackageName());
+                    Intent settings = new Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, pkg);
+                    try {
+                        startActivity(settings);
+                    } catch (ActivityNotFoundException e) {
+                        startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg));
+                    }
+                    return;
+                }
+                ReminderReceiver.testExpenseCall(MainActivity.this);
+            });
         }
 
         /** Today's balance + spending for the home-screen widget, formatted by the page. */
