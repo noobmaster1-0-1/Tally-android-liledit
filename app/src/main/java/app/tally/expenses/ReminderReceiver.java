@@ -308,15 +308,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         if (nm == null) return;
 
         if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel channel = new NotificationChannel(CH_EXPENSE_CALL,
-                    ctx.getString(R.string.ch_expense_call), NotificationManager.IMPORTANCE_HIGH);
-            channel.setDescription("Persistent call-style expense reminders");
-            channel.enableVibration(true);
-            channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
-                    new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
-            channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-            nm.createNotificationChannel(channel);
+            nm.createNotificationChannel(expenseCallChannel(ctx));
         }
 
         PendingIntent answer = expenseAction(ctx, EXPENSE_ANSWER, test, test ? 306 : 304);
@@ -468,6 +460,19 @@ public class ReminderReceiver extends BroadcastReceiver {
         refreshShown(ctx, config(ctx));
     }
 
+    /** The expense-call channel must be configured with ringtone sound on its first creation. */
+    private static NotificationChannel expenseCallChannel(Context ctx) {
+        NotificationChannel channel = new NotificationChannel(CH_EXPENSE_CALL,
+                ctx.getString(R.string.ch_expense_call), NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription("Persistent call-style expense reminders");
+        channel.enableVibration(true);
+        channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        return channel;
+    }
+
     /**
      * Creates (or renames, in the app's language) Tally's channels, so each kind can be silenced on its own in
      * Android's settings.
@@ -479,14 +484,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         int imp = NotificationManager.IMPORTANCE_DEFAULT;
         nm.createNotificationChannels(Arrays.asList(
                 new NotificationChannel(CH_NUDGE, ctx.getString(R.string.ch_nudge), imp),
-                new NotificationChannel(CH_EXPENSE_CALL, ctx.getString(R.string.ch_expense_call), NotificationManager.IMPORTANCE_HIGH) {{
-                    setDescription("Persistent call-style expense reminders");
-                    enableVibration(true);
-                    setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
-                            new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
-                    setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-                }},
+                expenseCallChannel(ctx),
                 new NotificationChannel(CH_CHECK, ctx.getString(R.string.ch_check), imp),
                 new NotificationChannel(CH_DUES, ctx.getString(R.string.ch_dues), imp),
                 new NotificationChannel(CH_BACKUP, ctx.getString(R.string.ch_backup), imp)));
