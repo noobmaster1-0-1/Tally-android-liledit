@@ -93,7 +93,7 @@ public class QuickAddActivity extends Activity {
     private JSONObject readNotebook() {
         String raw = SavedCopy.read(this);
         if (raw == null) return null;
-        int nl = raw.indexOf('\\n');
+        int nl = raw.indexOf('\n');
         if (nl < 1) return null;
         try { return new JSONObject(raw.substring(nl + 1)); }
         catch (JSONException e) { return null; }
