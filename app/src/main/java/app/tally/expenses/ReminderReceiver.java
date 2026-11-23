@@ -284,19 +284,11 @@ public class ReminderReceiver extends BroadcastReceiver {
     }
     /** A Settings button test: show the same incoming-call notification without changing today's reminder state. */
     static void testExpenseCall(Context ctx) {
-        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
-        boolean notifications = nm != null && nm.areNotificationsEnabled()
-                && (Build.VERSION.SDK_INT < 33 || ctx.checkSelfPermission("android.permission.POST_NOTIFICATIONS")
-                    == android.content.pm.PackageManager.PERMISSION_GRANTED);
-        boolean fullScreen = Build.VERSION.SDK_INT < 34 || (nm != null && nm.canUseFullScreenIntent());
-        if (!notifications || !fullScreen) {
-            // This is a user-initiated test, so show the screen even when Android blocks full-screen notifications.
-            Intent i = new Intent(ctx, ExpenseReminderActivity.class).putExtra(EXTRA_TEST, true)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            ctx.startActivity(i);
-            return;
-        }
-        showExpenseCall(ctx, true);
+        // A button tap is foreground user interaction: show the actual call screen immediately, regardless of
+        // Android's full-screen-notification permission. Scheduled calls still use the system CallStyle notification.
+        Intent i = new Intent(ctx, ExpenseReminderActivity.class).putExtra(EXTRA_TEST, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        ctx.startActivity(i);
     }
 
     static void finishTest(Context ctx) {
