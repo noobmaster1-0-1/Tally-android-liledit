@@ -90,6 +90,7 @@ public class QuickAddActivity extends Activity {
         save.setEnabled(false);final Choice fa=a,fc=c,fb=b;final Double fg=got;final double amountValue=value;final String memo=note.getText().toString().trim();
         new Thread(()->{boolean ok=SavedCopy.addWidgetEntry(this,type,amountValue,fa.id,fc==null?null:fc.id,fb==null?null:fb.id,fg,memo);
             runOnUiThread(()->{if(!ok){save.setEnabled(true);Toast.makeText(this,"Could not save. Open Tally and try again.",Toast.LENGTH_LONG).show();return;}
+                if ("expense".equals(type)) ReminderReceiver.widgetExpenseSaved(this);
                 TallyWidget.refresh(this);MainActivity.deliver("window.tallyWidgetRefresh&&window.tallyWidgetRefresh()");
                 Toast.makeText(this,"Saved",Toast.LENGTH_SHORT).show();finish();});
         },"tally-widget-entry").start();

@@ -125,6 +125,14 @@ public class ReminderReceiver extends BroadcastReceiver {
         refreshShown(ctx, config(cfg));
     }
 
+    /** A widget-side expense is a real spending entry: silence today's repeat call and cancel its next alarm. */
+    static void widgetExpenseSaved(Context ctx) {
+        prefs(ctx).edit().putString("lastEntry", today()).remove("expense:next").remove("expense:day").apply();
+        AlarmManager am=(AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
+        if(am!=null)am.cancel(broadcast(ctx,A_DAILY,null,DAILY_ID));
+        NotificationManager nm=(NotificationManager)ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        if(nm!=null)nm.cancel(EXPENSE_ID);
+    }
     static synchronized String takeActions(Context ctx) {
         SharedPreferences p = prefs(ctx);
         String q = p.getString("actions", "[]");

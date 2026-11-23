@@ -6,6 +6,8 @@ import android.os.SystemClock;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * The shell's own copy of the page's saved data: files/saved.json, the save number on its first line and the JSON
