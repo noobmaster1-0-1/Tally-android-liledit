@@ -77,14 +77,12 @@ public class QuickAddActivity extends Activity {
         Window w = getWindow();
         if (w != null) {
             w.setBackgroundDrawableResource(android.R.color.transparent);
-            w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             WindowManager.LayoutParams p = w.getAttributes();
             p.width = WindowManager.LayoutParams.MATCH_PARENT;
-            p.height = WindowManager.LayoutParams.WRAP_CONTENT;
-            p.gravity = Gravity.BOTTOM;
-            p.dimAmount = .38f;
+            p.height = WindowManager.LayoutParams.MATCH_PARENT;
+            p.gravity = Gravity.FILL;
             w.setAttributes(p);
-            w.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+            w.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
         }
         setFinishOnTouchOutside(true);
         setContentView(form());
@@ -200,15 +198,22 @@ public class QuickAddActivity extends Activity {
     }
 
     private View form() {
+        FrameLayout overlay = new FrameLayout(this);
+        overlay.setBackgroundColor(0x99000000);
+        overlay.setOnClickListener(v -> finish());
+
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
+        scroll.setClipToPadding(false);
+        scroll.setOnClickListener(v -> { });
         LinearLayout sheet = column();
         sheet.setPadding(dp(22), dp(12), dp(22), dp(20));
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(surface);
         bg.setCornerRadii(new float[]{dp(28),dp(28),dp(28),dp(28),dp(0),dp(0),dp(0),dp(0)});
         sheet.setBackground(bg);
-        scroll.addView(sheet);
+        scroll.addView(sheet, new ScrollView.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
 
         View handle = new View(this);
         handle.setBackground(shape(getColor(R.color.w_muted), 3));
@@ -300,7 +305,12 @@ public class QuickAddActivity extends Activity {
 
         cancel.setOnClickListener(v -> finish());
         save.setOnClickListener(v -> saveEntry());
-        return scroll;
+
+        int sheetHeight = Math.min((int) (getResources().getDisplayMetrics().heightPixels * .88f), dp(720));
+        FrameLayout.LayoutParams sheetParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, sheetHeight, Gravity.BOTTOM);
+        overlay.addView(scroll, sheetParams);
+        return overlay;
     }
 
     private void updateReceived() {
