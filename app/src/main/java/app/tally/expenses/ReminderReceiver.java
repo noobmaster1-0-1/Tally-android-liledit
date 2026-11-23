@@ -69,7 +69,8 @@ public class ReminderReceiver extends BroadcastReceiver {
         SharedPreferences p = prefs(ctx);
         String t = today();
         if (A_EXPENSE_ACTION.equals(a)) {
-            handleExpenseResponse(ctx, in.getStringExtra("response"));
+            if (in.getBooleanExtra(EXTRA_TEST, false)) finishTest(ctx);
+            else handleExpenseResponse(ctx, in.getStringExtra("response"));
         } else if (A_DAILY.equals(a)) {
             JSONObject dl = config(ctx).optJSONObject("daily");
             if (expenseReminderApplies(ctx, dl, t)) {
@@ -323,6 +324,11 @@ public class ReminderReceiver extends BroadcastReceiver {
         PendingIntent openApp = PendingIntent.getActivity(ctx, test ? 302 : 301,
                 MainActivity.openIntent(ctx, null),
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Intent callScreen = new Intent(ctx, ExpenseReminderActivity.class)
+                .putExtra(EXTRA_TEST, test)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent fullScreen = PendingIntent.getActivity(ctx, test ? 307 : 308, callScreen,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Notification.Builder builder = Build.VERSION.SDK_INT >= 26
                 ? new Notification.Builder(ctx, CH_EXPENSE_CALL) : new Notification.Builder(ctx);
@@ -334,7 +340,8 @@ public class ReminderReceiver extends BroadcastReceiver {
                 .setOngoing(true)
                 .setAutoCancel(false)
                 .setContentIntent(openApp)
-                .setFullScreenIntent(openApp, true);
+                // The full-screen intent must be the incoming-call screen, not the ordinary Tally home page.
+                .setFullScreenIntent(fullScreen, true);
         if (Build.VERSION.SDK_INT >= 31) {
             Person caller = new Person.Builder().setName("Tally").setImportant(true).build();
             builder.setStyle(Notification.CallStyle.forIncomingCall(caller, decline, answer).setIsVideo(false));
@@ -344,7 +351,8 @@ public class ReminderReceiver extends BroadcastReceiver {
                     .addAction(new Notification.Action.Builder(null, ctx.getString(R.string.expense_call_answer), answer).build());
         }
         try {
-            // Android itself renders CallStyle; do not attach a custom full-screen Activity here.
+            // Android renders CallStyle in the notification shade; the full-screen intent opens Tally's
+            // two-action incoming-call screen when Android permits full-screen notifications.
             nm.notify(test ? TEST_EXPENSE_ID : EXPENSE_ID, builder.build());
         } catch (SecurityException ignored) { }
     }
