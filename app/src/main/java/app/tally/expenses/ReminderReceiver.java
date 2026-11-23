@@ -69,8 +69,10 @@ public class ReminderReceiver extends BroadcastReceiver {
         SharedPreferences p = prefs(ctx);
         String t = today();
         if (A_EXPENSE_ACTION.equals(a)) {
+            String response = in.getStringExtra("response");
+            TallyConnectionService.endCurrent(EXPENSE_ANSWER.equals(response));
             if (in.getBooleanExtra(EXTRA_TEST, false)) finishTest(ctx);
-            else handleExpenseResponse(ctx, in.getStringExtra("response"));
+            else handleExpenseResponse(ctx, response);
         } else if (A_DAILY.equals(a)) {
             JSONObject dl = config(ctx).optJSONObject("daily");
             if (expenseReminderApplies(ctx, dl, t)) {
@@ -304,6 +306,9 @@ public class ReminderReceiver extends BroadcastReceiver {
     }
 
     private static void showExpenseCall(Context ctx, boolean test) {
+        // Register this as an Android Telecom call as well as showing our own incoming-call UI.
+        // CallStyle alone is only a notification and is not visible as a real call to Telecom/Bluetooth devices.
+        TallyConnectionService.placeIncomingCall(ctx, test);
         NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm == null) return;
 
