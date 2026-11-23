@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
     private static final int PICK_FOLDER = 4;
     private static final int PICK_RESTORE = 5;
     private static final int NOTIF_REQ = 3;
+    private static final int CALL_CONTACT_REQ = 4;
     /** Set while the activity is in the background (the WebView pauses once the page has saved what it must). */
     private boolean paused;
     /** The notification prompt came from a Settings "Allow" button: refused for good, it opens the settings page. */
@@ -311,6 +312,13 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == CALL_CONTACT_REQ) {
+            if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) {
+                TallyConnectionService.ensureCallerContact(this);
+            }
+            ReminderReceiver.testExpenseCall(this);
+            return;
+        }
         if (requestCode != NOTIF_REQ) return;
         asking = false;
         // empty: the request was interrupted (a second one while the prompt was up), not refused
@@ -803,8 +811,20 @@ public class MainActivity extends Activity {
                     openNotifSettings();
                     return;
                 }
-                // Even without full-screen access Android can still show and ring the CallStyle
-                // notification. The reminder settings page exposes the separate full-screen access switch.
+                // Android 14+ may silently downgrade a full-screen call to a heads-up notification
+                // until the user grants this app the special full-screen notification access.
+                if (Build.VERSION.SDK_INT >= 34 && !nm.canUseFullScreenIntent()) {
+                    Intent settings = new Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                            Uri.parse("package:" + getPackageName()));
+                    try { startActivity(settings); } catch (ActivityNotFoundException ignored) { openNotifSettings(); }
+                    return;
+                }
+                if (Build.VERSION.SDK_INT >= 23
+                        && checkSelfPermission(android.Manifest.permission.WRITE_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{android.Manifest.permission.WRITE_CONTACTS}, CALL_CONTACT_REQ);
+                    return;
+                }
+                TallyConnectionService.ensureCallerContact(MainActivity.this);
                 ReminderReceiver.testExpenseCall(MainActivity.this);
             });
         }
