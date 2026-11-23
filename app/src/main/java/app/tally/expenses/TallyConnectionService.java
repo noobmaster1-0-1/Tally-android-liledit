@@ -16,9 +16,14 @@ import android.telecom.TelecomManager;
 /** Registers Tally reminders with Android Telecom as self-managed incoming calls. */
 public class TallyConnectionService extends ConnectionService {
     static volatile TallyConnection current;
+    static volatile Context appContext;
+    static volatile boolean activeTest;
 
     static boolean placeIncomingCall(Context context, boolean test) {
         try {
+            if (android.os.Build.VERSION.SDK_INT < 26) return false;
+            appContext = context.getApplicationContext();
+            activeTest = test;
             TelecomManager telecom = context.getSystemService(TelecomManager.class);
             if (telecom == null) return false;
             PhoneAccountHandle handle = new PhoneAccountHandle(
@@ -59,42 +64,39 @@ public class TallyConnectionService extends ConnectionService {
         TallyConnection c = current;
         if (c == null) return;
         current = null;
-        c.finish(answered);
+        c.finish(answered, false);
     }
 
     static final class TallyConnection extends Connection {
         private boolean ended;
 
         @Override
-        public void onAnswer() {
-            setActive();
-        }
+        public void onAnswer() { finish(true, true); }
 
         @Override
-        public void onAnswer(int videoState) {
-            setActive();
-        }
+        public void onAnswer(int videoState) { finish(true, true); }
 
         @Override
-        public void onReject() {
-            finish(false);
-        }
+        public void onReject() { finish(false, true); }
 
         @Override
-        public void onDisconnect() {
-            finish(false);
-        }
+        public void onDisconnect() { finish(false, true); }
 
         @Override
-        public void onAbort() {
-            finish(false);
-        }
+        public void onAbort() { finish(false, true); }
 
-        void finish(boolean answered) {
+        void finish(boolean answered, boolean fromTelecom) {
             if (ended) return;
             ended = true;
+            if (current == this) current = null;
             setDisconnected(new DisconnectCause(answered ? DisconnectCause.LOCAL : DisconnectCause.REJECTED));
             destroy();
+            Context ctx = appContext;
+            if (fromTelecom && ctx != null) {
+                if (activeTest) ReminderReceiver.finishTest(ctx);
+                else ReminderReceiver.handleExpenseResponse(ctx,
+                        answered ? ReminderReceiver.EXPENSE_ANSWER : ReminderReceiver.EXPENSE_DECLINE);
+            }
         }
     }
 }
