@@ -10,7 +10,6 @@ import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.ConnectionService;
 import android.telecom.DisconnectCause;
-import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 
 /** Registers Tally reminders with Android Telecom as self-managed incoming calls. */
@@ -28,15 +27,14 @@ public class TallyConnectionService extends ConnectionService {
             if (telecom == null) return false;
             PhoneAccountHandle handle = new PhoneAccountHandle(
                     new ComponentName(context, TallyConnectionService.class), "tally_expense_reminder");
-            PhoneAccount account = PhoneAccount.builder(handle, "Tally expense reminders")
+            PhoneAccount account = PhoneAccount.builder(handle, "Tally")
+                    .setShortDescription("Tally")
                     .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
                     .build();
             telecom.registerPhoneAccount(account);
             Bundle extras = new Bundle();
-            extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS,
-                    Uri.fromParts("tel", "0000000000", null));
             Bundle callExtras = new Bundle();
-            callExtras.putString("tally_caller", "Tally expense reminder");
+            callExtras.putString("tally_caller", "Tally");
             callExtras.putBoolean("tally_test_call", test);
             extras.putBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, callExtras);
             telecom.addNewIncomingCall(handle, extras);
@@ -52,7 +50,7 @@ public class TallyConnectionService extends ConnectionService {
         Bundle extras = request.getExtras();
         String caller = extras == null ? "Tally" : extras.getString("tally_caller", "Tally");
         c.setCallerDisplayName(caller, TelecomManager.PRESENTATION_ALLOWED);
-        c.setAddress(Uri.fromParts("tel", "0000000000", null), TelecomManager.PRESENTATION_ALLOWED);
+        c.setAddress(null, TelecomManager.PRESENTATION_RESTRICTED);
         c.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
         c.setAudioModeIsVoip(true);
         c.setRinging();
