@@ -57,7 +57,7 @@ public class ReminderReceiver extends BroadcastReceiver {
     private static final int EXPENSE_ID = 3;
     private static final String PREFS = "tally_reminders";
     /** Channels: loan due days keep the original id (and whatever the user set for it). */
-    static final String CH_DUES = "reminders", CH_NUDGE = "nudge", CH_CHECK = "check", CH_BACKUP = "backup", CH_EXPENSE_CALL = "expense_call_salah_style";
+    static final String CH_DUES = "reminders", CH_NUDGE = "nudge", CH_CHECK = "check", CH_BACKUP = "backup", CH_EXPENSE_CALL = "expense_call_salah_style_v2";
     private static final int DAILY_ID = 1, CHECK_ID = 2;
     /** The config (plus exact-alarm ability) this process last armed: an unchanged sync re-arms nothing. In memory
      *  only, so the first sync after a force-stop or reboot (when Android has dropped the alarms) always re-arms. */
