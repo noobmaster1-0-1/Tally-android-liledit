@@ -1,6 +1,13 @@
 package app.tally.expenses;
 
+import android.Manifest;
 import android.content.ComponentName;
+import android.content.ContentProviderOperation;
+import android.content.OperationApplicationException;
+import android.content.pm.PackageManager;
+import android.provider.ContactsContract;
+import android.os.RemoteException;
+import java.util.ArrayList;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,6 +24,33 @@ public class TallyConnectionService extends ConnectionService {
     static volatile TallyConnection current;
     static volatile Context appContext;
     static volatile boolean activeTest;
+    static final String CALLER_NUMBER = "0000000000";
+
+    /** Creates a local contact so Bluetooth wearables that resolve numbers from contacts can label the call. */
+    static boolean ensureCallerContact(Context context) {
+        if (context.checkSelfPermission(Manifest.permission.WRITE_CONTACTS) != PackageManager.PERMISSION_GRANTED) return false;
+        android.content.SharedPreferences prefs = context.getSharedPreferences("tally_call_identity", Context.MODE_PRIVATE);
+        if (prefs.getBoolean("contact_created", false)) return true;
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+                .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
+                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, "Tally").build());
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, CALLER_NUMBER)
+                .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM)
+                .withValue(ContactsContract.CommonDataKinds.Phone.LABEL, "Tally reminder ID (not a real number)").build());
+        try {
+            context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+            prefs.edit().putBoolean("contact_created", true).apply();
+            return true;
+        } catch (Exception e) { return false; }
+    }
 
     static boolean placeIncomingCall(Context context, boolean test) {
         try {
@@ -32,10 +66,12 @@ public class TallyConnectionService extends ConnectionService {
             PhoneAccount account = PhoneAccount.builder(handle, "Tally")
                     .setShortDescription("Tally")
                     .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+                    .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
                     .build();
             telecom.registerPhoneAccount(account);
             Bundle extras = new Bundle();
             Bundle callExtras = new Bundle();
+            extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, Uri.fromParts("tel", CALLER_NUMBER, null));
             callExtras.putString("tally_caller", "Tally");
             callExtras.putBoolean("tally_test_call", test);
             extras.putBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, callExtras);
@@ -52,7 +88,7 @@ public class TallyConnectionService extends ConnectionService {
         Bundle extras = request.getExtras();
         String caller = extras == null ? "Tally" : extras.getString("tally_caller", "Tally");
         c.setCallerDisplayName(caller, TelecomManager.PRESENTATION_ALLOWED);
-        c.setAddress(null, TelecomManager.PRESENTATION_RESTRICTED);
+        c.setAddress(request.getAddress() == null ? Uri.fromParts("tel", CALLER_NUMBER, null) : request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
         c.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
         c.setAudioModeIsVoip(true);
         c.setRinging();
