@@ -74,9 +74,9 @@ public class QuickAddActivity extends Activity {
             return;
         }
 
+        setContentView(form());
         Window w = getWindow();
         if (w != null) {
-            w.setBackgroundDrawableResource(android.R.color.transparent);
             WindowManager.LayoutParams p = w.getAttributes();
             p.width = WindowManager.LayoutParams.MATCH_PARENT;
             p.height = WindowManager.LayoutParams.MATCH_PARENT;
@@ -84,8 +84,6 @@ public class QuickAddActivity extends Activity {
             w.setAttributes(p);
             w.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
         }
-        setFinishOnTouchOutside(true);
-        setContentView(form());
     }
 
     private JSONObject readNotebook() {
