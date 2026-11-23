@@ -333,7 +333,8 @@ public class ReminderReceiver extends BroadcastReceiver {
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setOngoing(true)
                 .setAutoCancel(false)
-                .setContentIntent(openApp);
+                .setContentIntent(openApp)
+                .setFullScreenIntent(openApp, true);
         if (Build.VERSION.SDK_INT >= 31) {
             Person caller = new Person.Builder().setName("Tally").setImportant(true).build();
             builder.setStyle(Notification.CallStyle.forIncomingCall(caller, decline, answer).setIsVideo(false));
