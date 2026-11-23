@@ -32,9 +32,9 @@ public class TallyWidget extends AppWidgetProvider {
     static final String A_TICK = "app.tally.expenses.WIDGET_TICK";
     private static final String PREFS = "tally_widget";
     /** The layout's text sizes (sp): heading, balance, spending line; a line of text is about 1.33 sizes tall. */
-    private static final float T_TITLE = 11, T_BALANCE = 24, T_SPENT = 12, LINE = 1.33f;
+    private static final float T_TITLE = 10, T_BALANCE = 22, T_SPENT = 11, LINE = 1.33f;
     /** The layout's vertical padding (dp). */
-    private static final int PAD = 24;
+    private static final int PAD = 20;
 
     static void save(Context ctx, String json) {
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("data", json).apply();
