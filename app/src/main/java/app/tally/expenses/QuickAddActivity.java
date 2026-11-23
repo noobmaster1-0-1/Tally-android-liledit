@@ -63,7 +63,7 @@ public class QuickAddActivity extends Activity {
     private Spinner spinner(ArrayList<Choice> values){Spinner s=new Spinner(this);ArrayAdapter<Choice>a=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,values);a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);s.setAdapter(a);return s;}
     private View form(){
         ScrollView scroll=new ScrollView(this);LinearLayout r=root();scroll.addView(r);
-        TextView title=new TextView(this);title.setText("expense".equals(type)?"Add expense":"income".equals(type)?"Add income":"Transfer");title.setTextSize(21);title.setTypeface(null,1);r.addView(title,lp(6));
+        TextView title=new TextView(this);title.setText("expense".equals(type)?getString(R.string.qa_out):"income".equals(type)?getString(R.string.qa_in):getString(R.string.qa_tr));title.setTextSize(21);title.setTypeface(null,1);r.addView(title,lp(6));
         label(r,"Amount");amount=edit("Amount");r.addView(amount,lp(5));
         if("transfer".equals(type)){
             label(r,"From account");from=spinner(accounts);r.addView(from,lp(4));label(r,"To account");to=spinner(accounts);r.addView(to,lp(4));
