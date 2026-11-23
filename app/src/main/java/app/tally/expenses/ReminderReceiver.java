@@ -285,20 +285,15 @@ public class ReminderReceiver extends BroadcastReceiver {
             if(am!=null){arm(am,next,broadcast(ctx,A_DAILY,null,DAILY_ID));prefs(ctx).edit().putLong("expense:next",next).putString("expense:day",today()).apply();}
         } else prefs(ctx).edit().putLong("expense:next",0).putString("expense:day",today()).apply();
     }
-    /** A Settings button test: show the same incoming-call notification without changing today's reminder state. */
+    /** User-initiated test uses the exact same notification and CallStyle path as the scheduled reminder. */
     static void testExpenseCall(Context ctx) {
-        // A button tap is foreground user interaction: show the actual call screen immediately, regardless of
-        // Android's full-screen-notification permission. Scheduled calls still use the system CallStyle notification.
-        Intent i = new Intent(ctx, ExpenseReminderActivity.class).putExtra(EXTRA_TEST, true)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        ctx.startActivity(i);
+        showExpenseCall(ctx, true);
     }
 
     static void finishTest(Context ctx) {
         NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) nm.cancel(TEST_EXPENSE_ID);
     }
-
     /** Direct broadcast actions, matching the Salah Tracker call reminder pattern. */
     private static PendingIntent expenseAction(Context ctx, String response, boolean test, int requestCode) {
         Intent action = new Intent(ctx, ReminderReceiver.class).setAction(A_EXPENSE_ACTION)
