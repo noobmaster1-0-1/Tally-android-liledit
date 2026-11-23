@@ -9,4 +9,6 @@
     <color name="w_btn_bg">#DEE0FF</color>
     <color name="w_btn_fg">#00105C</color>
     <color name="w_spent">#BA1A1A</color>
+    <color name="w_got">#1B7F3A</color>
+    <color name="w_xfer">#315F9A</color>
 </resources>
