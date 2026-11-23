@@ -136,6 +136,12 @@ public class TallyWidget extends AppWidgetProvider {
         v.setContentDescription(R.id.w_income, ctx.getString(R.string.w_income));
         v.setContentDescription(R.id.w_transfer, ctx.getString(R.string.w_transfer));
 
+        // Tapping the card itself opens Tally. The three action controls keep their own quick-entry intents.
+        Intent open = new Intent(ctx, OpenActivity.class);
+        PendingIntent openApp = PendingIntent.getActivity(ctx, 40, open,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        v.setOnClickPendingIntent(R.id.widget_root, openApp);
+
         // Widget actions open a compact native entry form, not MainActivity.
         v.setOnClickPendingIntent(R.id.w_add, quickEntry(ctx, "expense", 41));
         v.setOnClickPendingIntent(R.id.w_income, quickEntry(ctx, "income", 43));
