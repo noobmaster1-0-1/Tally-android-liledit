@@ -136,18 +136,16 @@ public class TallyWidget extends AppWidgetProvider {
         v.setContentDescription(R.id.w_income, ctx.getString(R.string.w_income));
         v.setContentDescription(R.id.w_transfer, ctx.getString(R.string.w_transfer));
 
-        // Every widget action opens the real app directly on the corresponding form.
-        Intent home = new Intent(ctx, OpenActivity.class);
-        home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-        v.setOnClickPendingIntent(R.id.w_body, PendingIntent.getActivity(ctx, 40, home,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-        v.setOnClickPendingIntent(R.id.w_add, PendingIntent.getActivity(ctx, 41,
-                MainActivity.openIntent(ctx, "add:out"), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-        v.setOnClickPendingIntent(R.id.w_income, PendingIntent.getActivity(ctx, 43,
-                MainActivity.openIntent(ctx, "add:in"), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-        v.setOnClickPendingIntent(R.id.w_transfer, PendingIntent.getActivity(ctx, 44,
-                MainActivity.openIntent(ctx, "add:tr"), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        // Widget actions open a compact native entry form, not MainActivity.
+        v.setOnClickPendingIntent(R.id.w_add, quickEntry(ctx, "expense", 41));
+        v.setOnClickPendingIntent(R.id.w_income, quickEntry(ctx, "income", 43));
+        v.setOnClickPendingIntent(R.id.w_transfer, quickEntry(ctx, "transfer", 44));
         return v;
+    }
+
+    private static PendingIntent quickEntry(Context ctx, String type, int requestCode) {
+        Intent i = new Intent(ctx, QuickAddActivity.class).putExtra(QuickAddActivity.EXTRA_TYPE, type);
+        return PendingIntent.getActivity(ctx, requestCode, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     /** Wake shortly after midnight so "Spent today" resets even if the app isn't opened. */

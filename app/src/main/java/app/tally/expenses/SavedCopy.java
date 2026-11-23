@@ -102,5 +102,34 @@ final class SavedCopy {
         }
     }
 
+    /** Atomic native quick-entry write to the same saved notebook used by the WebView. */
+    static boolean addWidgetEntry(Context ctx, String type, double amount, String account, String category,
+                                  String to, Double toAmount, String note) {
+        synchronized (LOCK) {
+            long until=SystemClock.uptimeMillis()+2500;
+            while(writing&&SystemClock.uptimeMillis()<until){
+                try{LOCK.wait(100);}catch(InterruptedException e){Thread.currentThread().interrupt();return false;}
+            }
+            if(writing)return false;
+            String raw=BackupReceiver.read(file(ctx));if(raw==null)return false;
+            int nl=raw.indexOf('\n');if(nl<1)return false;
+            try{
+                int seq=Integer.parseInt(raw.substring(0,nl).trim())+1;
+                JSONObject state=new JSONObject(raw.substring(nl+1));
+                JSONArray txns=state.optJSONArray("txns");if(txns==null)txns=new JSONArray();
+                JSONObject tx=new JSONObject().put("id",java.util.UUID.randomUUID().toString().replace("-",""))
+                    .put("ts",System.currentTimeMillis()).put("type","transfer".equals(type)?"transfer":"income".equals(type)?"income":"expense")
+                    .put("amount",amount).put("account",account)
+                    .put("date",new java.text.SimpleDateFormat("yyyy-MM-dd",java.util.Locale.US).format(new java.util.Date()))
+                    .put("note",note==null?"":note);
+                if("transfer".equals(type)){tx.put("to",to);if(toAmount!=null)tx.put("toAmount",toAmount);}
+                else tx.put("cat",category);
+                txns.put(tx);state.put("txns",txns);
+                JSONObject settings=state.optJSONObject("settings");if(settings==null)settings=new JSONObject();
+                settings.put("income".equals(type)?"lastAccIn":"lastAcc",account);state.put("settings",settings);
+                write(file(ctx),seq,state.toString());return okSeq>=seq;
+            }catch(Exception e){return false;}
+        }
+    }
     private static File file(Context ctx) { return new File(ctx.getFilesDir(), "saved.json"); }
 }

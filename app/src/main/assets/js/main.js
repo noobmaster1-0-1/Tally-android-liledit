@@ -42,6 +42,7 @@ Object.assign(window, {
   tallyBackedUp: onBackedUp,
   tallyPerms: onPerms,
   tallyPause: flushMirror,
+  tallyWidgetRefresh: () => { loadState(); render(); syncWidget(); syncReminders(); },
 });
 /* the page is drawn: the shell ends its launch screen (the logo). Called right away, not from requestAnimationFrame,
    which a still-hidden WebView may never run. */

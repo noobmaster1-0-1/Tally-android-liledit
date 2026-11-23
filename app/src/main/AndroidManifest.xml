@@ -47,6 +47,7 @@
             android:label="@string/qa_title"
             android:noHistory="true"
             android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/QuickAdd" />
         <!-- the widget body's tap: invisible, only opens MainActivity (see OpenActivity.java) -->
         <activity
