@@ -316,9 +316,6 @@ public class ReminderReceiver extends BroadcastReceiver {
 
         PendingIntent answer = expenseAction(ctx, EXPENSE_ANSWER, test, test ? 306 : 304);
         PendingIntent decline = expenseAction(ctx, EXPENSE_DECLINE, test, test ? 305 : 303);
-        PendingIntent openApp = PendingIntent.getActivity(ctx, test ? 302 : 301,
-                MainActivity.openIntent(ctx, null),
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         Intent callScreen = new Intent(ctx, ExpenseReminderActivity.class)
                 .putExtra(EXTRA_TEST, test)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -334,7 +331,7 @@ public class ReminderReceiver extends BroadcastReceiver {
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setOngoing(true)
                 .setAutoCancel(false)
-                .setContentIntent(openApp)
+                .setContentIntent(fullScreen)
                 // The full-screen intent must be the incoming-call screen, not the ordinary Tally home page.
                 .setFullScreenIntent(fullScreen, true);
         if (Build.VERSION.SDK_INT >= 31) {
